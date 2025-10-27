@@ -7,7 +7,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 
 print("🔹 Membaca dataset...")
-df = pd.read_excel("Data Sosial Kec. Cilawu (2).xlsx")
+df = pd.read_excel("Data Sosial Kec. Cilawu.xlsx")
 
 bantuan_cols = [
     'Penerima BPNT', 'Penerima BPUM', 'Penerima BST', 'Penerima PKH', 
