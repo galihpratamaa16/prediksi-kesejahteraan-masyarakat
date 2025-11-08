@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.decomposition import PCA
 from imblearn.over_sampling import SMOTE
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -105,7 +106,7 @@ print("\n⚖️  Menyeimbangkan data dengan SMOTE...")
 smote = SMOTE(random_state=42)
 X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
 
-print("Sebelum SMOTE:", {dict(zip(target_names_map, pd.Series(y_train_res).value_counts().sort_index()))})
+print("Sebelum SMOTE:", dict(zip(target_names_map, pd.Series(y_train_res).value_counts().sort_index())))
 print("Sesudah SMOTE:", pd.Series(y_train_res).value_counts().to_dict())
 
 # Latih model Random Forest
@@ -138,3 +139,52 @@ plt.title("Confusion Matrix - Random Forest (dengan SMOTE)")
 plt.show()
 
 print("\n✅ Selesai! Model sudah dievaluasi.")
+
+K_OPTIMAL = 3
+# Bagian Visualisasi Cluster (PCA + K-Means dengan K={K_OPTIMAL})
+
+pca = PCA(n_components=2, random_state=42)
+X_pca = pca.fit_transform(X_Scaled)
+
+explained_variance = pca.explained_variance_ratio_.sum()
+print(f"PCA selesai. 2 Komponen menjelaskan {explained_variance*100:.2f}% dari varians data.")
+
+kmeans_final = KMeans(n_clusters=K_OPTIMAL, random_state=42, n_init='auto', max_iter=300)
+clusters_lables = kmeans_final.fit_predict(X_Scaled)
+
+df_plot = pd.DataFrame(data=X_pca, columns=['Principal Component 1', 'Principal Component 2'])
+df_plot['Cluster'] = clusters_lables.astype(str) 
+
+plt.figure(figsize=(10,8))
+sns.scatterplot(
+    x='Principal Component 1',
+    y='Principal Component 2',
+    hue='Cluster',
+    data=df_plot,
+    palette='viridis',
+    s=20,
+    alpha=0.6
+)
+
+
+centroid_pca = pca.transform(kmeans_final.cluster_centers_)
+centroid_x = centroid_pca[:, 0]
+centroid_y = centroid_pca[:, 1]
+
+plt.scatter(
+    centroid_x,
+    centroid_y,
+    s=200,
+    c='red',
+    marker='X',
+    label='Centroids'
+)
+
+plt.title(f'Diagram Cluster Kesejahteraan (K={K_OPTIMAL}) - Visualisasi PCA')
+plt.xlabel(f'Principal Component 1 ({pca.explained_variance_ratio_[0]*100:.2f}%)')
+plt.ylabel(f'Proncipal Component 2 ({pca.explained_variance_ratio_[1]*100:.2f}%)')
+plt.legend(title='Cluster ID')
+plt.grid(True)
+plt.show()
+
+print("Visualisasi Diagram Cluster Selesai. Amati pemisahan kelompok data.")
